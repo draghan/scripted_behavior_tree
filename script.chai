@@ -1,0 +1,10 @@
+
+def simple_action()
+{
+    return BehaviorStateSuccess;
+}
+
+behavior_tree.add_selector( );
+behavior_tree.add_loop(5);
+behavior_tree.add_condition(fun(){return true;});
+behavior_tree.add_action(simple_action);

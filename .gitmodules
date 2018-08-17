@@ -1,0 +1,6 @@
+[submodule "external/bt"]
+	path = external/bt
+	url = https://github.com/draghan/behavior_tree.git
+[submodule "external/chaiscript"]
+	path = external/chaiscript
+	url = https://github.com/ChaiScript/ChaiScript.git
