@@ -4,3 +4,6 @@
 [submodule "external/chaiscript"]
 	path = external/chaiscript
 	url = https://github.com/ChaiScript/ChaiScript.git
+[submodule "external/catch"]
+	path = external/catch
+	url = https://github.com/catchorg/Catch2.git

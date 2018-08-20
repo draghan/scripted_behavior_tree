@@ -1,10 +1,39 @@
+global saidHello = False;
+global canLookAround = True;
 
-def simple_action()
-{
-    return BehaviorStateSuccess;
-}
+BT.AddSelector();
+BT.AddSequence();
+BT.SetAtAbsolutely(0);
+BT.AddInvert();
+BT.SetAtRelatively(0);
+BT.AddCondition(fun()
+    {
+      return saidHello;
+    });
+BT.SetAtAbsolutely(0);
+BT.AddAction(fun()
+    {
+        print("Hello!");
+        saidHello = True;
+        return StateSuccess;
+    });
 
-behavior_tree.add_selector( );
-behavior_tree.add_loop(5);
-behavior_tree.add_condition(fun(){return true;});
-behavior_tree.add_action(simple_action);
+BT.SetAtAbsolutely();
+BT.AddSequence();
+BT.SetAtRelatively(1);
+BT.AddCondition(fun()
+    {
+        return canLookAround;
+    });
+
+BT.AddAction(fun()
+    {
+        print("Robot stop!");
+        return StateSuccess;
+    });
+
+BT.AddAction(fun()
+    {
+        print("Robot rotate 180 degrees!");
+        return StateSuccess;
+    });

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(scripted_behavior_tree)
 
-add_compile_options(-std=c++1z -Wnoexcept -O3)
+add_compile_options(-std=c++1z -Os)
 
 include_directories(external/bt/behavior_system)
 include_directories(external/bt/behavior_system/composite)
@@ -37,8 +37,6 @@ add_executable(scripted_behavior_tree
         external/bt/behavior_system/EditorMetadata.hpp
         external/bt/behavior_system/IBehavior.cpp
         external/bt/behavior_system/IBehavior.hpp
-        scripted_behavior_tree/ScriptedBT.cpp
-        scripted_behavior_tree/ScriptedBT.hpp
-        main.cpp)
+        main.cpp scripted_behavior_tree/IScriptedBehaviorTree.cpp scripted_behavior_tree/IScriptedBehaviorTree.hpp scripted_behavior_tree/ChaiScriptedBehaviorTree.cpp scripted_behavior_tree/ChaiScriptedBehaviorTree.hpp)
 
 target_link_libraries(scripted_behavior_tree -ldl -lpthread)

@@ -4,10 +4,25 @@
 
 #pragma once
 
+#include <chaiscript.hpp>
+#include "IScriptedBehaviorTree.hpp"
 
-class ChaiScriptedBehaviorTree
+class ChaiScriptedBehaviorTree: public IScriptedBehaviorTree
 {
+public:
+    explicit ChaiScriptedBehaviorTree(std::string script_path);
+    bool load_tree() override;
 
+    ~ChaiScriptedBehaviorTree() override = default;
+
+protected:
+    void register_bt_interface() override;
+
+private:
+    chaiscript::ChaiScript script;
+
+    void register_set_at_absolutely();
+    void register_set_at_relatively();
 };
 
 
