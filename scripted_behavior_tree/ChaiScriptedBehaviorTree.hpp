@@ -18,7 +18,6 @@ public:
 protected:
     void register_bt_interface() override;
 
-private:
     chaiscript::ChaiScript script;
 
     void register_set_at_absolutely();

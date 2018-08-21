@@ -11,9 +11,7 @@ include_directories(external/bt/behavior_system/tree)
 include_directories(external/chaiscript/include/chaiscript)
 include_directories(scripted_behavior_tree)
 
-
-add_executable(scripted_behavior_tree
-        external/bt/behavior_system/composite/BehaviorSelector.cpp
+set(SOURCE_FILES external/bt/behavior_system/composite/BehaviorSelector.cpp
         external/bt/behavior_system/composite/BehaviorSelector.hpp
         external/bt/behavior_system/composite/BehaviorSequence.cpp
         external/bt/behavior_system/composite/BehaviorSequence.hpp
@@ -37,6 +35,23 @@ add_executable(scripted_behavior_tree
         external/bt/behavior_system/EditorMetadata.hpp
         external/bt/behavior_system/IBehavior.cpp
         external/bt/behavior_system/IBehavior.hpp
-        main.cpp scripted_behavior_tree/IScriptedBehaviorTree.cpp scripted_behavior_tree/IScriptedBehaviorTree.hpp scripted_behavior_tree/ChaiScriptedBehaviorTree.cpp scripted_behavior_tree/ChaiScriptedBehaviorTree.hpp)
+        scripted_behavior_tree/IScriptedBehaviorTree.cpp
+        scripted_behavior_tree/IScriptedBehaviorTree.hpp
+        scripted_behavior_tree/ChaiScriptedBehaviorTree.cpp
+        scripted_behavior_tree/ChaiScriptedBehaviorTree.hpp
+        )
+
+add_executable(scripted_behavior_tree
+        ${SOURCE_FILES}
+        main.cpp
+        )
+
+add_executable(unit_tests
+        ${SOURCE_FILES}
+        unit_tests/main_tests.cpp
+        unit_tests/tree_tests.cpp
+        )
+
 
 target_link_libraries(scripted_behavior_tree -ldl -lpthread)
+target_link_libraries(unit_tests -ldl -lpthread)
