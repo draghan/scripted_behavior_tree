@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(scripted_behavior_tree)
 
-add_compile_options(-std=c++1z -Os)
+add_compile_options(-std=c++17 -Os)
 
 include_directories(external/bt/behavior_system)
 include_directories(external/bt/behavior_system/composite)
@@ -52,6 +52,6 @@ add_executable(unit_tests
         unit_tests/tree_tests.cpp
         )
 
-
-target_link_libraries(scripted_behavior_tree -ldl -lpthread)
-target_link_libraries(unit_tests -ldl -lpthread)
+set(LINKER_OPTIONS -ldl -lpthread -lstdc++fs)
+target_link_libraries(scripted_behavior_tree ${LINKER_OPTIONS})
+target_link_libraries(unit_tests ${LINKER_OPTIONS})

@@ -102,7 +102,7 @@ void evaluate_bt(BehaviorTree &bt)
 
 Let's assume that we have some class where `saidHello` is an bool member variable, `canLookAround` is some method which checks whether actor could looks around or not and we've prepared our actor for doing all of the stuff described in action nodes, like `Stop` or `Say`, etc.. Simple dummy class `Actor` satisfies those assumptions:
 
-```ChaiScript
+```Kotlin
 // ChaiScript
 
 // dummy mock class represents an Actor
@@ -192,7 +192,7 @@ class Actor
 ```  
 Lets create an instance of the `Actor` class:
 
-```ChaiScript
+```Kotlin
 // ChaiScript
 
 global hero = Actor();
@@ -203,7 +203,7 @@ In the script you just call positioning and adding methods on the `BT` object. A
 
 Let's implement the behavior tree:
 
-```ChaiScript
+```Kotlin
 // ChaiScript
 
 BT.AddSelector(); // root

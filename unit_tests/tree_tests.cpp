@@ -52,8 +52,8 @@ struct MockTree
 class ScriptedTreeForTest: public ChaiScriptedBehaviorTree
 {
 public:
-    explicit ScriptedTreeForTest(std::string script)
-            : ChaiScriptedBehaviorTree{"unit_test.chai"}
+    explicit ScriptedTreeForTest(std::string script, std::string name = "")
+            : ChaiScriptedBehaviorTree{"unit_test.chai", name}
     {
         std::ofstream script_file{script_path};
         script_file << script;
@@ -424,6 +424,492 @@ TEST_CASE("Testing tree interface of BehaviorTree class", "[Tree]")
     }
 }
 
+TEST_CASE("Testing registered (non-node-related) interface")
+{
+    SECTION("BehaviorSuccess")
+    {
+        std::string script = R"(
+
+        global state = StateSuccess;
+
+        BT.AddAction(fun()
+        {
+            return state;
+        });
+        )";
+
+        ScriptedTreeForTest tree{script};
+        REQUIRE(tree.load_tree());
+        REQUIRE(tree.evaluate() == BehaviorState::success);
+    }
+    SECTION("BehaviorFailure")
+    {
+        ScriptedTreeForTest tree{""};
+        tree.load_tree();
+        std::string script = R"(
+
+        global state_failure = StateFailure;
+
+        BT.AddAction(
+        fun()
+        {
+            return state_failure;
+        });
+        )";
+        REQUIRE_NOTHROW(tree.execute(script));
+        REQUIRE(tree.evaluate() == BehaviorState::failure);
+    }
+
+    SECTION("BehaviorRunning")
+    {
+        ScriptedTreeForTest tree{""};
+        tree.load_tree();
+        std::string script = R"(
+
+        global state_running = StateRunning;
+        BT.AddAction(
+        fun()
+        {
+            return state_running;
+        });
+        )";
+        REQUIRE_NOTHROW(tree.execute(script));
+        REQUIRE(tree.evaluate() == BehaviorState::running);
+    }
+
+    SECTION("Comparison between BehaviorStates")
+    {
+        std::string script = R"(
+
+        global state_1 = StateRunning;
+        global state_2 = StateFailure;
+        global state_3 = StateSuccess;
+        BT.AddCondition(
+        fun()
+        {
+            if((state_1 != state_2) && (state_2 != state_3) && (state_1 != state_3))
+            {
+                return True;
+            }
+            else
+            {
+                return False;
+            }
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        REQUIRE(tree.load_tree());
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::success);
+    }
+}
+
+TEST_CASE("Testing every node type")
+{
+    SECTION("Selector")
+    {
+        std::string script = R"(
+        BT.AddSelector();
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return False;
+        });
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return False;
+        });
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return True;
+        });
+        BT.AddAction(fun()
+        {
+            ++a;
+            return StateRunning;
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        int a = 0;
+        REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+        REQUIRE(tree.load_tree());
+
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 3);
+    }
+
+    SECTION("Sequence")
+    {
+        std::string script = R"(
+        BT.AddSequence();
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return True;
+        });
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return False;
+        });
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return True;
+        });
+        BT.AddAction(fun()
+        {
+            ++a;
+            return StateRunning;
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        int a = 0;
+        REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+        REQUIRE(tree.load_tree());
+
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::failure);
+        REQUIRE(a == 2);
+    }
+
+    SECTION("Action")
+    {
+        std::string script = R"(
+        BT.AddAction(fun()
+        {
+            ++a;
+            if(a == 1)
+            {
+                return StateSuccess;
+            }
+            else if(a == 2)
+            {
+                return StateFailure;
+            }
+            else
+            {
+                return StateRunning;
+            }
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        int a = 0;
+        REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+        REQUIRE(tree.load_tree());
+
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 1);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::failure);
+        REQUIRE(a == 2);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::running);
+        REQUIRE(a == 3);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::running);
+        REQUIRE(a == 4);
+    }
+
+    SECTION("Condition")
+    {
+        std::string script = R"(
+        BT.AddCondition(fun()
+        {
+            ++a;
+            if(a % 2)
+            {
+                return True;
+            }
+            else
+            {
+                return False;
+            }
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        int a = 0;
+        REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+        REQUIRE(tree.load_tree());
+
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 1);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::failure);
+        REQUIRE(a == 2);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 3);
+
+        result = tree.evaluate();
+        REQUIRE(result == BehaviorState::failure);
+        REQUIRE(a == 4);
+    }
+
+    SECTION("Invert")
+    {
+        std::string script = R"(
+        BT.AddInvert();
+        BT.AddCondition(fun()
+        {
+            ++a;
+            return True;
+        });
+        )";
+        ScriptedTreeForTest tree{script};
+        int a = 0;
+        REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+        REQUIRE(tree.load_tree());
+
+        tree.set_at_absolutely();
+        auto result = tree.evaluate();
+        REQUIRE(result == BehaviorState::failure);
+        REQUIRE(a == 1);
+    }
+
+    SECTION("Loop")
+    {
+        SECTION("Loop with child evaluating to success")
+        {
+            std::string script = R"(
+            BT.AddLoop(5);
+            BT.AddCondition(fun()
+            {
+                ++a;
+                return True;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 5);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 10);
+        }
+
+        SECTION("Loop with child evaluating to failure")
+        {
+            std::string script = R"(
+            BT.AddLoop(5);
+            BT.AddCondition(fun()
+            {
+                ++a;
+                return False;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::failure);
+            REQUIRE(a == 1);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::failure);
+            REQUIRE(a == 2);
+
+        }
+
+        SECTION("Loop with child evaluating to running")
+        {
+            std::string script = R"(
+            BT.AddLoop(5);
+            BT.AddAction(fun()
+            {
+                ++a;
+                return StateRunning;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::running);
+            REQUIRE(a == 1);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::running);
+            REQUIRE(a == 2);
+
+        }
+
+    }
+
+    SECTION("MaxNTries")
+    {
+        SECTION("MaxNTries with child evaluating to success")
+        {
+            std::string script = R"(
+            BT.AddMaxNTries(5);
+            BT.AddCondition(fun()
+            {
+                ++a;
+                return True;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 1);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 2);
+        }
+
+        SECTION("MaxNTries with child evaluating to failure")
+        {
+            std::string script = R"(
+            BT.AddMaxNTries(5);
+            BT.AddCondition(fun()
+            {
+                ++a;
+                return False;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::failure);
+            REQUIRE(a == 5);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::failure);
+            REQUIRE(a == 10);
+        }
+
+        SECTION("MaxNTries with child evaluating to running")
+        {
+            std::string script = R"(
+            BT.AddMaxNTries(5);
+            BT.AddAction(fun()
+            {
+                ++a;
+                return StateRunning;
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::running);
+            REQUIRE(a == 1);
+
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::running);
+            REQUIRE(a == 2);
+
+        }
+
+        SECTION("MaxNTries with child evaluating 2 times to failure and then to success")
+        {
+            std::string script = R"(
+            BT.AddMaxNTries(5);
+            BT.AddAction(fun()
+            {
+                ++a;
+                if(a < 3)
+                {
+                    return StateFailure;
+                }
+                else
+                {
+                    return StateSuccess;
+                }
+            });
+            )";
+            ScriptedTreeForTest tree{script};
+            int a = 0;
+            REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
+            REQUIRE(tree.load_tree());
+
+            tree.set_at_absolutely();
+            auto result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 3);
+
+            a = 1;
+            result = tree.evaluate();
+            REQUIRE(result == BehaviorState::success);
+            REQUIRE(a == 3);
+        }
+    }
+
+    SECTION("Link")
+    {
+        std::string script_for_execute = R"(
+            BT.AddLoop(5);
+            BT.AddCondition(fun()
+            {
+                ++a;
+                return True;
+            });
+            )";
+        ScriptedTreeForTest tree_for_execute{script_for_execute, "tree_for_execute"};
+        int a = 0;
+        REQUIRE_NOTHROW(tree_for_execute.register_global_int(a, "a"));
+        REQUIRE(tree_for_execute.load_tree());
+
+        tree_for_execute.set_at_absolutely();
+        auto result = tree_for_execute.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 5);
+
+        std::string script_for_link = R"(
+            BT.AddLoop(5);
+            BT.AddLink(tree_for_execute);
+            )";
+        ScriptedTreeForTest tree_for_link{script_for_link};
+        REQUIRE(tree_for_link.load_tree());
+
+        a = 0;
+        tree_for_link.set_at_absolutely();
+        result = tree_for_link.evaluate();
+        REQUIRE(result == BehaviorState::success);
+        REQUIRE(a == 25);
+    }
+}
+
 TEST_CASE("Testing \'behavior part\' interface of BehaviorTree class", "[Tree]")
 {
     SECTION("Tree with sequences of success actions")
@@ -539,6 +1025,44 @@ TEST_CASE("Testing \'behavior part\' interface of BehaviorTree class", "[Tree]")
         REQUIRE(tree.evaluate() == BehaviorState::failure);
         REQUIRE(action_count == 5);
     }
+
+    SECTION("Test for decorator Link")
+    {
+        std::string script_a = R"(
+        BT.AddSelector();
+        BT.AddInvert();
+        BT.SetAtRelatively(0);
+        BT.AddAction(fun(){ return StateSuccess; });
+        )";
+        std::string script_b = R"(
+        BT.AddInvert();
+        BT.AddLink(a);
+        )";
+        ScriptedTreeForTest a{script_a, "a"};
+        REQUIRE(a.load_tree());
+        ScriptedTreeForTest b{script_b, "b"};
+        REQUIRE(b.load_tree());
+
+        REQUIRE(a.get_tree_id() == "a");
+        REQUIRE(b.get_tree_id() == "b");
+
+        REQUIRE(b.get_node_count() == 2);
+        REQUIRE(a.get_node_count() == 3);
+
+        REQUIRE(a.set_at_absolutely());
+        REQUIRE(b.set_at_absolutely());
+
+        REQUIRE(a.evaluate() == BehaviorState::failure);
+        REQUIRE(b.evaluate() == BehaviorState::success);
+        REQUIRE(a.evaluate() == BehaviorState::failure);
+
+        REQUIRE(a.set_at_absolutely());
+        REQUIRE(a.add_condition([](){ return true; }));
+
+        REQUIRE(a.set_at_absolutely());
+        REQUIRE(a.evaluate() == BehaviorState::success);
+        REQUIRE(b.evaluate() == BehaviorState::failure);
+    }
 }
 
 TEST_CASE("Testing factor part of BehaviorTree class", "[Tree]")
@@ -598,5 +1122,28 @@ TEST_CASE("Testing factor part of BehaviorTree class", "[Tree]")
         REQUIRE(tree.set_at_absolutely());
         REQUIRE(tree.evaluate() == BehaviorState::success);
         REQUIRE(action_counter == 1);
+    }
+
+    SECTION("Testing registration of ScriptedTrees and sharing trees' references between scripts")
+    {
+        std::string script_a = R"(
+        BT.AddSelector();
+        )";
+        std::string script_b = R"(
+        a.AddInvert();
+        a.SetAtRelatively(0);
+        a.AddAction(fun(){ return StateSuccess; });
+        BT.AddSequence();
+        )";
+        ScriptedTreeForTest a{script_a, "a"};
+        REQUIRE(a.load_tree());
+        ScriptedTreeForTest b{script_b, "b"};
+        REQUIRE(b.load_tree());
+        REQUIRE(a.get_tree_id() == "a");
+        REQUIRE(b.get_tree_id() == "b");
+        REQUIRE(b.get_node_count() == 1);
+        REQUIRE(a.get_node_count() == 3);
+        REQUIRE(a.set_at_absolutely());
+        REQUIRE(a.evaluate() == BehaviorState::failure);
     }
 }
