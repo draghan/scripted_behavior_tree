@@ -6,7 +6,7 @@
 #include <filesystem>
 #include "ChaiScriptedBehaviorTree.hpp"
 
-std::vector<ChaiScriptedBehaviorTree::TreeReflection> ChaiScriptedBehaviorTree::known_scripted_trees;
+std::vector<ChaiScriptedBehaviorTree *> ChaiScriptedBehaviorTree::known_scripted_trees;
 
 bool ChaiScriptedBehaviorTree::load_tree()
 {
@@ -95,7 +95,7 @@ ChaiScriptedBehaviorTree::ChaiScriptedBehaviorTree(std::string script_path, std:
                           std::move(prepare_id(tree_name))
                   }
 {
-    ChaiScriptedBehaviorTree::known_scripted_trees.push_back({this, this->tree_id});
+    ChaiScriptedBehaviorTree::known_scripted_trees.push_back(this);
     this->register_bt_interface();
 }
 
@@ -213,7 +213,7 @@ ChaiScriptedBehaviorTree::~ChaiScriptedBehaviorTree()
     auto found = std::find_if(known_scripted_trees.begin(), known_scripted_trees.end(),
                               [&](auto &tree_data)
                               {
-                                  return tree_data.pointer == this;
+                                  return tree_data == this;
                               });
 
     known_scripted_trees.erase(found);
@@ -223,10 +223,9 @@ void ChaiScriptedBehaviorTree::register_all_known_scripted_trees()
 {
     for(const auto &tree_data : known_scripted_trees)
     {
-        if(tree_data.pointer != this)
+        if(tree_data != this)
         {
-            this->script
-                .add_global(chaiscript::var(static_cast<BehaviorTree *>(tree_data.pointer)), tree_data.identifier);
+            this->script.add_global(chaiscript::var(static_cast<BehaviorTree *>(tree_data)), tree_data->get_tree_id());
         }
     }
 }

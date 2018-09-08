@@ -17,18 +17,12 @@ public:
     std::string get_tree_id() const;
 
 protected:
-    struct TreeReflection
-    {
-        ChaiScriptedBehaviorTree *pointer;
-        std::string identifier;
-    };
-
     void register_bt_interface() override;
 
     chaiscript::ChaiScript script;
     std::string tree_id;
 
-    static std::vector<TreeReflection> known_scripted_trees;
+    static std::vector<ChaiScriptedBehaviorTree *> known_scripted_trees;
 
 private:
     void register_all_known_scripted_trees();
