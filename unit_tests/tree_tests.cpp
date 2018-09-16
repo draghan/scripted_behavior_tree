@@ -69,7 +69,36 @@ public:
     {
         this->script.eval(code);
     }
+
+    static const std::string& identifiers(ScriptIdentifier id)
+    {
+        return ChaiScriptedBehaviorTree::identifiers[id];
+    }
 };
+
+TEST_CASE("IDENTIFIERS")
+{
+    SECTION("Testing identifiers registering for scripts")
+    {
+        using stft = ScriptedTreeForTest;
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::sequence) == "AddSequence");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::selector) == "AddSelector");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::condition) == "AddCondition");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::action) == "AddAction");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::link) == "AddLink");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::invert) == "AddInvert");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::loop) == "AddLoop");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::max_n_tries) == "AddMaxNTries");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::this_tree) == "BT");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::behavior_state) == "BehaviorState");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::state_failure) == "StateFailure");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::state_success) == "StateSuccess");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::state_running) == "StateRunning");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::set_at_absolutely) == "SetAtAbsolutely");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::set_at_relatively) == "SetAtRelatively");
+        REQUIRE(stft::identifiers(stft::ScriptIdentifier::set_at_id) == "SetAtId");
+    }
+}
 
 TEST_CASE("Testing tree interface of BehaviorTree class", "[Tree]")
 {

@@ -7,6 +7,25 @@
 #include "ChaiScriptedBehaviorTree.hpp"
 
 std::vector<ChaiScriptedBehaviorTree *> ChaiScriptedBehaviorTree::known_scripted_trees;
+const ChaiScriptedBehaviorTree::extended_array_id_t ChaiScriptedBehaviorTree::identifiers
+        {
+                "AddSequence",
+                "AddSelector",
+                "AddCondition",
+                "AddAction",
+                "AddLink",
+                "AddInvert",
+                "AddLoop",
+                "AddMaxNTries",
+                "BT",
+                "BehaviorState",
+                "StateFailure",
+                "StateSuccess",
+                "StateRunning",
+                "SetAtRelatively",
+                "SetAtAbsolutely",
+                "SetAtId",
+        };
 
 bool ChaiScriptedBehaviorTree::load_tree()
 {
@@ -25,64 +44,88 @@ bool ChaiScriptedBehaviorTree::load_tree()
 
 void ChaiScriptedBehaviorTree::register_bt_interface()
 {
-    using namespace chaiscript;
+    this->register_boolean();
 
-    // workaround for exception bad any cast related to built-in boolean and std::function<bool()>:
-    this->script.add_global_const(const_var(0), "False");
-    this->script.add_global_const(const_var(1), "True");
+    this->register_behavior_state();
 
-    this->script.add(type_conversion<int, bool>([](const int &i)
-                                                {
-                                                    return i != 0;
-                                                }));
-    this->script.add(type_conversion<bool, int>([](const int &b)
-                                                {
-                                                    if(b)
-                                                    {
-                                                        return 1;
-                                                    }
-                                                    return 0;
-                                                }));
+    this->register_this_tree();
 
-    // BehaviorState enum:
-    this->script.add(user_type<BehaviorState>(), "BehaviorState");
-    this->script.add(constructor<BehaviorState(const BehaviorState &)>(), "BehaviorState");
-    this->script.add(constructor<BehaviorState()>(), "BehaviorState");
-    this->script.add_global_const(const_var(BehaviorState::failure), "StateFailure");
-    this->script.add_global_const(const_var(BehaviorState::success), "StateSuccess");
-    this->script.add_global_const(const_var(BehaviorState::running), "StateRunning");
-    this->script.add(fun([](const BehaviorState &lhs, const BehaviorState &rhs)
-                         {
-                             return (lhs == rhs);
-                         }), "==");
-    this->script.add(fun([](const BehaviorState &lhs, const BehaviorState &rhs)
-                         {
-                             return (lhs != rhs);
-                         }), "!=");
-    this->script.add(fun([](BehaviorState &lhs, const BehaviorState &rhs)
-                         {
-                             return (lhs = rhs);
-                         }), "=");
-
-    // BehaviorTree global variable:
-    this->script.add_global(var(static_cast<BehaviorTree *>(this)), "BT");
     this->register_all_known_scripted_trees();
 
-    // BehaviorTree adding nodes methods
-    this->script.add(fun(&BehaviorTree::add_selector), "AddSelector");
-    this->script.add(fun(&BehaviorTree::add_sequence), "AddSequence");
-    this->script.add(fun(&BehaviorTree::add_action), "AddAction");
-    this->script.add(fun(&BehaviorTree::add_condition), "AddCondition");
-    this->script.add(fun(&BehaviorTree::add_invert), "AddInvert");
-    this->script.add(fun(&BehaviorTree::add_loop), "AddLoop");
-    this->script.add(fun(&BehaviorTree::add_max_N_tries), "AddMaxNTries");
-    this->script.add(fun(&BehaviorTree::add_link), "AddLink");
+    this->register_adding_nodes();
 
+    this->register_positioning();
+}
 
-    // BehaviorTree positioning methods:
+void ChaiScriptedBehaviorTree::register_positioning()
+{
+    this->script.add(chaiscript::fun(&BehaviorTree::set_at_id), identifiers[ScriptIdentifier::set_at_id]);
     this->register_set_at_absolutely();
     this->register_set_at_relatively();
-    this->script.add(fun(&BehaviorTree::set_at_id), "SetAtId");
+}
+
+void ChaiScriptedBehaviorTree::register_adding_nodes()
+{
+    this->script.add(chaiscript::fun(&BehaviorTree::add_selector), identifiers[ScriptIdentifier::selector]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_sequence), identifiers[ScriptIdentifier::sequence]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_action), identifiers[ScriptIdentifier::action]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_condition), identifiers[ScriptIdentifier::condition]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_invert), identifiers[ScriptIdentifier::invert]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_loop), identifiers[ScriptIdentifier::loop]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_max_N_tries), identifiers[ScriptIdentifier::max_n_tries]);
+    this->script.add(chaiscript::fun(&BehaviorTree::add_link), identifiers[ScriptIdentifier::link]);
+}
+
+void ChaiScriptedBehaviorTree::register_this_tree()
+{
+    this->script
+        .add_global(chaiscript::var(static_cast<BehaviorTree *>(this)), identifiers[ScriptIdentifier::this_tree]);
+}
+
+void ChaiScriptedBehaviorTree::register_boolean()
+{
+    // workaround for exception bad any cast related to built-in boolean and std::function<bool()>:
+    this->script.add_global_const(chaiscript::const_var(0), "False");
+    this->script.add_global_const(chaiscript::const_var(1), "True");
+
+    this->script.add(chaiscript::type_conversion<int, bool>([](const int &i)
+                                                            {
+                                                                return i != 0;
+                                                            }));
+    this->script.add(chaiscript::type_conversion<bool, int>([](const int &b)
+                                                            {
+                                                                if(b)
+                                                                {
+                                                                    return 1;
+                                                                }
+                                                                return 0;
+                                                            }));
+}
+
+void ChaiScriptedBehaviorTree::register_behavior_state()
+{
+    this->script.add(chaiscript::user_type<BehaviorState>(), identifiers[ScriptIdentifier::behavior_state]);
+    this->script
+        .add(chaiscript::constructor<BehaviorState(const BehaviorState &)>(), identifiers[ScriptIdentifier::behavior_state]);
+    this->script.add(chaiscript::constructor<BehaviorState()>(), identifiers[ScriptIdentifier::behavior_state]);
+    this->script
+        .add_global_const(chaiscript::const_var(BehaviorState::failure), identifiers[ScriptIdentifier::state_failure]);
+    this->script
+        .add_global_const(chaiscript::const_var(BehaviorState::success), identifiers[ScriptIdentifier::state_success]);
+    this->script
+        .add_global_const(chaiscript::const_var(BehaviorState::running), identifiers[ScriptIdentifier::state_running]);
+    this->script.add(chaiscript::fun([](const BehaviorState &lhs, const BehaviorState &rhs)
+                                     {
+                                         return (lhs == rhs);
+                                     }), "==");
+    this->script.add(chaiscript::fun([](const BehaviorState &lhs, const BehaviorState &rhs)
+                                     {
+                                         return (lhs != rhs);
+                                     }), "!=");
+    this->script.add(chaiscript::fun([](BehaviorState &lhs, const BehaviorState &rhs)
+                                     {
+                                         return (lhs = rhs);
+                                     }), "=");
 }
 
 ChaiScriptedBehaviorTree::ChaiScriptedBehaviorTree(std::string script_path, std::string tree_name)
@@ -102,7 +145,7 @@ ChaiScriptedBehaviorTree::ChaiScriptedBehaviorTree(std::string script_path, std:
 void ChaiScriptedBehaviorTree::register_set_at_absolutely()
 {
     using namespace chaiscript;
-    const std::string set_at_absolutely_name = "SetAtAbsolutely";
+    const std::string set_at_absolutely_name = identifiers[ScriptIdentifier::set_at_absolutely];
 
     this->script.add(fun(&BehaviorTree::set_at_absolutely<>), set_at_absolutely_name);
     this->script.add(fun(&BehaviorTree::set_at_absolutely<size_t>), set_at_absolutely_name);
@@ -154,7 +197,7 @@ void ChaiScriptedBehaviorTree::register_set_at_absolutely()
 void ChaiScriptedBehaviorTree::register_set_at_relatively()
 {
     using namespace chaiscript;
-    const std::string set_at_relatively_name = "SetAtRelatively";
+    const std::string set_at_relatively_name = identifiers[ScriptIdentifier::set_at_relatively];
 
     this->script.add(fun(&BehaviorTree::set_at_relatively<>), set_at_relatively_name);
     this->script.add(fun(&BehaviorTree::set_at_relatively<size_t>), set_at_relatively_name);
