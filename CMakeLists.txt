@@ -31,8 +31,6 @@ set(SOURCE_FILES external/bt/behavior_system/composite/BehaviorSelector.cpp
         external/bt/behavior_system/tree/BehaviorTree.hpp
         external/bt/behavior_system/BehaviorEmpty.cpp
         external/bt/behavior_system/BehaviorEmpty.hpp
-        external/bt/behavior_system/EditorMetadata.cpp
-        external/bt/behavior_system/EditorMetadata.hpp
         external/bt/behavior_system/IBehavior.cpp
         external/bt/behavior_system/IBehavior.hpp
         scripted_behavior_tree/IScriptedBehaviorTree.cpp
