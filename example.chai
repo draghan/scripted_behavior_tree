@@ -5,8 +5,8 @@ class Actor
     // c-tor
     def Actor()
     {
-        this.saidHello = False;
-        this.rotating = False;
+        this.saidHello = false;
+        this.rotating = false;
 
         this.lookAroundCounter = 0;
         this.lookAroundLimiter = 5;
@@ -18,18 +18,18 @@ class Actor
     def sayHello()
     {
         print("Hello!\n");
-        this.saidHello = True;
+        this.saidHello = true;
     }
 
     def canLookAround()
     {
         if(this.lookAroundCounter >= this.lookAroundLimiter)
         {
-            return False;
+            return false;
         }
 
         ++this.lookAroundCounter;
-        return True;
+        return true;
     }
 
     def isStopped()
@@ -38,9 +38,9 @@ class Actor
 
         if(this.stoppedCounter % 3 == 0) // 2/3 of checks will fail
         {
-            return True;
+            return true;
         }
-        return False;
+        return false;
     }
 
     def stop()
@@ -50,27 +50,27 @@ class Actor
 
     def isStillRotating()
     {
-        if(this.rotating == False)
+        if(this.rotating == false)
         {
-            return False;
+            return false;
         }
 
         ++this.rotateCounter;
 
         if(this.rotateCounter % 5 == 0) // 4/5 of checks will confirm that actor is rotating
         {
-            return False;
+            return false;
         }
-        return True;
+        return true;
     }
 
     def rotate(degrees)
     {
-        if(this.rotating == True)
+        if(this.rotating == true)
         {
             return;
         }
-        this.rotating = True;
+        this.rotating = true;
         print("I'll turn ${degrees} degrees!\n");
     }
 
@@ -128,7 +128,7 @@ BT.AddCondition(fun()
 // Stop action node:
 BT.AddAction(fun()
             {
-                if(hero.isStopped() == True)
+                if(hero.isStopped() == true)
                 {
                     return StateSuccess;
                 }
@@ -140,7 +140,7 @@ BT.AddAction(fun()
 BT.AddAction(fun()
             {
                 hero.rotate(360);
-                if(hero.isStillRotating() == True)
+                if(hero.isStillRotating() == true)
                 {
                     return StateRunning;
                 }

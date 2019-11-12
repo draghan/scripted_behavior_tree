@@ -69,7 +69,6 @@ private:
     void register_set_at_absolutely();
     void register_set_at_relatively();
     void register_behavior_state();
-    void register_boolean();
     void register_this_tree();
     void register_adding_nodes();
     void register_positioning();

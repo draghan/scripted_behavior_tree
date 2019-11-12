@@ -44,8 +44,6 @@ bool ChaiScriptedBehaviorTree::load_tree()
 
 void ChaiScriptedBehaviorTree::register_bt_interface()
 {
-    this->register_boolean();
-
     this->register_behavior_state();
 
     this->register_this_tree();
@@ -80,26 +78,6 @@ void ChaiScriptedBehaviorTree::register_this_tree()
 {
     this->script
         .add_global(chaiscript::var(static_cast<BehaviorTree *>(this)), identifiers[ScriptIdentifier::this_tree]);
-}
-
-void ChaiScriptedBehaviorTree::register_boolean()
-{
-    // workaround for exception bad any cast related to built-in boolean and std::function<bool()>:
-    this->script.add_global_const(chaiscript::const_var(0), "False");
-    this->script.add_global_const(chaiscript::const_var(1), "True");
-
-    this->script.add(chaiscript::type_conversion<int, bool>([](const int &i)
-                                                            {
-                                                                return i != 0;
-                                                            }));
-    this->script.add(chaiscript::type_conversion<bool, int>([](const int &b)
-                                                            {
-                                                                if(b)
-                                                                {
-                                                                    return 1;
-                                                                }
-                                                                return 0;
-                                                            }));
 }
 
 void ChaiScriptedBehaviorTree::register_behavior_state()

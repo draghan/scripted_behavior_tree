@@ -182,12 +182,12 @@ TEST_CASE("Testing tree interface of BehaviorTree class", "[Tree]")
     {
         /*
                  selector-root-0
-              __________|____________
-              |         |           |
-            sequence-1  action-4  action-5
-              ___|_______
-              |         |
-            action-2  action-3
+              __________|_________________
+              |         |                |
+            sequence-1  condition-4  condition-5
+              ___|____________
+              |              |
+            condition-2  condition-3
 
          */
         std::string script = R"chaiscript(
@@ -196,20 +196,20 @@ TEST_CASE("Testing tree interface of BehaviorTree class", "[Tree]")
         BT.SetAtRelatively(0);
         BT.AddCondition(fun()
                            {
-                               return False;
+                               return false;
                            });
         BT.AddCondition(fun()
                            {
-                               return True;
+                               return true;
                            });
         BT.SetAtAbsolutely();
         BT.AddCondition(fun()
                            {
-                               return True;
+                               return true;
                            });
         BT.AddCondition(fun()
                            {
-                               return True;
+                               return true;
                            });
 
         )chaiscript";
@@ -508,11 +508,11 @@ TEST_CASE("Testing registered (non-node-related) interface")
         {
             if((state_1 != state_2) && (state_2 != state_3) && (state_1 != state_3))
             {
-                return True;
+                return true;
             }
             else
             {
-                return False;
+                return false;
             }
         });
         )";
@@ -533,17 +533,17 @@ TEST_CASE("Testing every node type")
         BT.AddCondition(fun()
         {
             ++a;
-            return False;
+            return false;
         });
         BT.AddCondition(fun()
         {
             ++a;
-            return False;
+            return false;
         });
         BT.AddCondition(fun()
         {
             ++a;
-            return True;
+            return true;
         });
         BT.AddAction(fun()
         {
@@ -569,17 +569,17 @@ TEST_CASE("Testing every node type")
         BT.AddCondition(fun()
         {
             ++a;
-            return True;
+            return true;
         });
         BT.AddCondition(fun()
         {
             ++a;
-            return False;
+            return false;
         });
         BT.AddCondition(fun()
         {
             ++a;
-            return True;
+            return true;
         });
         BT.AddAction(fun()
         {
@@ -647,20 +647,22 @@ TEST_CASE("Testing every node type")
         BT.AddCondition(fun()
         {
             ++a;
-            if(a % 2)
+            if((a % 2) != 0)
             {
-                return True;
+                return true;
             }
             else
             {
-                return False;
+                return false;
             }
         });
         )";
         ScriptedTreeForTest tree{script};
         int a = 0;
         REQUIRE_NOTHROW(tree.register_global_int(a, "a"));
-        REQUIRE(tree.load_tree());
+        bool loaded = false;
+        REQUIRE_NOTHROW(loaded = tree.load_tree());
+        REQUIRE(loaded);
 
         tree.set_at_absolutely();
         auto result = tree.evaluate();
@@ -687,7 +689,7 @@ TEST_CASE("Testing every node type")
         BT.AddCondition(fun()
         {
             ++a;
-            return True;
+            return true;
         });
         )";
         ScriptedTreeForTest tree{script};
@@ -710,7 +712,7 @@ TEST_CASE("Testing every node type")
             BT.AddCondition(fun()
             {
                 ++a;
-                return True;
+                return true;
             });
             )";
             ScriptedTreeForTest tree{script};
@@ -735,7 +737,7 @@ TEST_CASE("Testing every node type")
             BT.AddCondition(fun()
             {
                 ++a;
-                return False;
+                return false;
             });
             )";
             ScriptedTreeForTest tree{script};
@@ -791,7 +793,7 @@ TEST_CASE("Testing every node type")
             BT.AddCondition(fun()
             {
                 ++a;
-                return True;
+                return true;
             });
             )";
             ScriptedTreeForTest tree{script};
@@ -816,7 +818,7 @@ TEST_CASE("Testing every node type")
             BT.AddCondition(fun()
             {
                 ++a;
-                return False;
+                return false;
             });
             )";
             ScriptedTreeForTest tree{script};
@@ -901,7 +903,7 @@ TEST_CASE("Testing every node type")
             BT.AddCondition(fun()
             {
                 ++a;
-                return True;
+                return true;
             });
             )";
         ScriptedTreeForTest tree_for_execute{script_for_execute, "tree_for_execute"};
@@ -1114,7 +1116,7 @@ TEST_CASE("Testing factor part of BehaviorTree class", "[Tree]")
 
         tree.execute(R"(BT.AddCondition(fun()
                                {
-                                   return True;
+                                   return true;
                                });
         )");
 
